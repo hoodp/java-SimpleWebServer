@@ -21,15 +21,6 @@ public class Server {
 		// While there is input, read it in, and simply echo it back
 		String line;
 		line = input.readLine();
-		while (line != null) {
-			if (line.toLowerCase().trim().equals("")) {
-				socket.close();
-				break;
-			}
-			//System.out.println("I heard: " + line);
-			//output.printf("%s \n", line);
-			line = input.readLine();
-		}
 		output.println("HTTP/1.1 200 OK");
 		output.println("Content-Type: text/plain");
 		output.println("Content-Length: 70");
@@ -37,6 +28,13 @@ public class Server {
 		output.println("\nThis is not the real content because this server"
 				+ " is not yet complete.");
 		output.println("");
+		while (line != null) {
+			if (line.toLowerCase().trim().equals("")) {
+				socket.close();
+				break;
+			}
+			line = input.readLine();
+		}
 	}
 	
 	public static void main(String[] args) throws IOException {
