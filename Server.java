@@ -24,7 +24,14 @@ public class Server {
 		line = in.readLine();
 
 		// get requested file
-		File file = new File(line.split(" ")[1]);
+		String fileName = line.split(" ")[1];
+
+		// check for tilda
+		if (fileName.charAt(1) == '~')
+			fileName = "/home/" + fileName.substring(2);
+		
+		// create new file
+		File file = new File(fileName);
 		
 		// check if file exists
 		if (!file.exists()) {
@@ -40,7 +47,7 @@ public class Server {
 		} else {
 
 			// convert file name back to string
-			String fileName = file.getName();
+			//String fileName = file.getName();
 			
 			// input stream for reading file
 			InputStream fileIn;
@@ -75,6 +82,7 @@ public class Server {
 				// set buffer to size of the image
 				byte[] buffer = new byte[fileIn.available()];
 				
+				// send headers
 				out.println("HTTP/1.1 200 OK");
 				out.println("Content-Type: image/jpg");
 				out.println("Content-Length: " + fileIn.available());
@@ -105,7 +113,7 @@ public class Server {
 	public static void main(String[] args) throws IOException {
 
 		// Create a socket that listens on port 8354.handleConnection
-		ServerSocket serverSocket = new ServerSocket(8356);
+		ServerSocket serverSocket = new ServerSocket(8354);
 
 		// go to next connection 
 		while (true)
