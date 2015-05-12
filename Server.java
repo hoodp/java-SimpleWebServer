@@ -1,6 +1,14 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
+import java.util.Scanner;
 
 /**
  * @author Paul Hood
@@ -15,13 +23,14 @@ public class Server {
 				socket.getInputStream()));
 
 		// Create a PrintStream than can write to the socket
-		// Passing "true" as the second parameter causes each write to be
-		// followed by a flush.
 		PrintStream out = new PrintStream(socket.getOutputStream(), true);
 
 		// While there is in, read it in, and simply echo it back
 		String line;
 		line = in.readLine();
+		
+		if (line == null) 
+			return;
 
 		// get requested file
 		String fileName = line.split(" ")[1];
@@ -29,9 +38,10 @@ public class Server {
 		// check for tilda
 		if (fileName.charAt(1) == '~')
 			fileName = "/home/" + fileName.substring(2);
-		
+				
 		// create new file
-		File file = new File(fileName);
+		File file = new File(fileName.contains("?") ? 
+				fileName.substring(0, fileName.indexOf("?")) : fileName);
 		
 		// check if file exists
 		if (!file.exists()) {
@@ -92,7 +102,43 @@ public class Server {
 				out.write(buffer, 0, fileIn.read(buffer));
 				out.println("");
 			}
+			
+			// check for python file with query string
+			else if (fileName.indexOf("py") > 0 && fileName.contains("?") 
+					&& fileName.contains("=")) {
+				
+				// get start of query string
+				int queryStart = fileName.indexOf("?") + 1;
+				
+				// get query starting at index
+				String queryString = fileName.substring(queryStart);
+				
+				// split the string by the equals sign
+				String[] querySplit = queryString.split("=");
+				
+				// add environment variables
+				try {
+					ProcessBuilder pb = new ProcessBuilder("python", "/home/hoodp/hello.py");
+					Map<String, String> env = pb.environment();
+					env.put(querySplit[0], querySplit[1]);
+					Process p = pb.start();
+					Scanner input = new Scanner(p.getInputStream());
+					out.println("HTTP/1.1 200 OK");
+					out.println("Content-Type: text/plain");
+					//out.println("Content-Length: 2048");
+					out.println("Connection: close\n");
+					while (input.hasNext()) {
+						out.println(input.nextLine());
+					}
+					
+					// close the scanner
+					input.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
 		}
+		
 		while (line != null) {
 
 			// check for empty line 
@@ -116,7 +162,8 @@ public class Server {
 		ServerSocket serverSocket = new ServerSocket(8354);
 
 		// go to next connection 
-		while (true)
+		while (true) { 
 			handleConnection(serverSocket.accept());
+		}
 	}
 }
